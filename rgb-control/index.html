@@ -35,12 +35,12 @@
                 // 這裡為了方便，直接搜尋所有支援藍牙的裝置
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
-                    optionalServices: ['0000ffe0', '6e400001'] // 常見的 HC-08/HM-10 服務 UUID
+                    optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb', '6e400001-b5a3-f393-e0a9-e50e24dcca9e'] // 常見的 HC-08/HM-10 服務 UUID
                 });
                 const server = await device.gatt.connect();
                 // 嘗試取得服務（此處以常見的 FFE0 為例，HC-08 常用 0000ffe0-0000-1000-8000-00805f9b34fb）
-                const service = await server.getPrimaryService('0000ffe0');
-                txCharacteristic = await service.getCharacteristic('0000ffe1');
+                const service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
+                txCharacteristic = await service.getCharacteristic('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
                 
                 document.getElementById('connectBtn').innerText = "🛑 已連線";
                 document.getElementById('connectBtn').style.background = "#28a745";
