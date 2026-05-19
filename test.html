@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生活科技 Uno 藍牙控制器</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; padding-top: 30px; }
+        .card { background: white; padding: 20px; display: inline-block; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        input[type=range] { width: 200px; margin: 15px; }
+        button { padding: 10px 20px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Arduino Uno RGB 控制</h2>
+        <button id="connectBtn" onclick="connectBluetooth()">1. 連接藍牙模組</button>
+        <hr>
+        <p>紅色: <span id="rVal">0</span></p>
+        <input type="range" id="red" min="0" max="255" value="0" oninput="sendColor()"><br>
+        <p>綠色: <span id="gVal">0</span></p>
+        <input type="range" id="green" min="0" max="255" value="0" oninput="sendColor()"><br>
+        <p>藍色: <span id="bVal">0</span></p>
+        <input type="range" id="blue" min="0" max="255" value="0" oninput="sendColor()">
+    </div>
+
+    <script>
+        let txCharacteristic;
+        // BLE 預設的通用序列通訊 UUID
+        const UART_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"; 
+        const TX_CHARACTERISTIC_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"; // 依模組可能需調整，HC-08通常可用通用設定
+
+        async function connectBluetooth() {
+            try {
+                // 這裡為了方便，直接搜尋所有支援藍牙的裝置
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['0000ffe0', '6e400001'] // 常見的 HC-08/HM-10 服務 UUID
+                });
+                const server = await device.gatt.connect();
+                // 嘗試取得服務（此處以常見的 FFE0 為例，HC-08 常用 0000ffe0-0000-1000-8000-00805f9b34fb）
+                const service = await server.getPrimaryService('0000ffe0');
+                txCharacteristic = await service.getCharacteristic('0000ffe1');
+                
+                document.getElementById('connectBtn').innerText = "🛑 已連線";
+                document.getElementById('connectBtn').style.background = "#28a745";
+            } catch (error) {
+                alert("連線失敗: " + error);
+            }
+        }
+
+        function sendColor() {
+            let r = document.getElementById('red').value;
+            let g = document.getElementById('green').value;
+            let b = document.getElementById('blue').value;
+            
+            document.getElementById('rVal').innerText = r;
+            document.getElementById('gVal').innerText = g;
+            document.getElementById('bVal').innerText = b;
+
+            if (txCharacteristic) {
+                let str = r + "," + g + "," + b + "\n";
+                let encoder = new TextEncoder();
+                txCharacteristic.writeValue(encoder.encode(str));
+            }
+        }
+    </script>
+</body>
+</html>
